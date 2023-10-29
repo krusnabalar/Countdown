@@ -7,15 +7,55 @@
 
 import SwiftUI
 
+
 struct ContentView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundColor(.accentColor)
-            Text("Hello, world!")
+    @ObservedObject var eventStore = EventDataStore()
+    @State var newEventName : String = ""
+    @State var newEventDate : String = ""
+
+    var addEventBar : some View {
+        HStack {
+            TextField("Event Name: ", text: self.$newEventName)
+            TextField("Event Date: ", text: self.$newEventDate)
+            Button(action: self.addEvent, label: {
+                Text("Add Event")
+            })
         }
-        .padding()
+    }
+    
+    func addEvent() {
+        if (!newEventName.isEmpty && !newEventDate.isEmpty) {
+            eventStore.events.append(Event(
+                id: String(eventStore.events.count + 1),
+                eventName: newEventName,
+                date: newEventDate
+            ))
+        }
+        self.newEventName = ""
+        self.newEventDate = ""
+    }
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                addEventBar.padding()
+                List {
+                    ForEach(self.eventStore.events) { event in
+                        HStack{
+                            Text(event.eventName)
+                            Spacer()
+                            Text("|")
+                            Spacer()
+                            Text(event.date)
+                        }
+                    }.onDelete(perform: self.deleteEvent)
+                }.navigationBarTitle("Events").navigationBarItems(trailing: EditButton())
+            }
+        }
+    }
+    
+    func deleteEvent(at offsets: IndexSet) {
+        eventStore.events.remove(atOffsets: offsets)
     }
 }
 
